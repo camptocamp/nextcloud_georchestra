@@ -1,0 +1,10 @@
+build
+.idea
+vendor
+/.ptp-sync/
+.buildpath
+.vscode
+*.swp
+**/.ptp-sync-folder
+.project
+.settings
