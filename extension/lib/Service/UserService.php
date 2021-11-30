@@ -20,23 +20,23 @@ class UserService {
     public function login($userId, $password) {
         $this->userSession->getSession()->regenerateId();
         $user = $this->userManager->get($userId);
-        $this->userSession->createSessionToken($this->request, $user->getUID(), $user->getUID());
-        $ret = $this->userSession->login("admin", "");
+        //$this->userSession->createSessionToken($this->request, $user->getUID(), $user->getUID());
+        $ret = $this->userSession->login($userId, "");
         $this->userSession->createSessionToken($this->request, $user->getUID(), $user->getUID());
 
         return $ret;
     }
 
-    public function isLoggedIn(){
+    public function isLoggedIn() {
         return $this->userSession->isLoggedIn();
     }
 
     public function logout() {
-        $this->userSession->logout();
+        head('Location: ' . $request->getHost() . '/logout');
+        exit();
     }
 
-    public function registerBackend(Backend $backend)
-    {
+    public function registerBackend(Backend $backend) {
         $this->userManager->registerBackend($backend);
     }
 }

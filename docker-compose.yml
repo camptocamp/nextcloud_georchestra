@@ -1,0 +1,176 @@
+version: "3.8"
+secrets:
+  slapd_password:
+    file: ./secrets/slapd_password.txt
+  geoserver_privileged_user_passwd:
+    file: ./secrets/geoserver_privileged_user_passwd.txt
+services:
+  nextcloud:
+    build: .
+    image: nextcloud_georchestra
+    environment:
+      PHP_UPLOAD_LIMIT: "4G"
+      OVERWRITEPROTOCOL: "https"
+      OVERWRITEWEBROOT: "/files"
+      OVERWRITEHOST: "georchestra-127-0-1-1.traefik.me"
+      POSTGRES_DB: nextcloud
+      POSTGRES_HOST: nextcloud_db
+      POSTGRES_USER: nextcloud
+      POSTGRES_PASSWORD: nextcloud
+      NEXTCLOUD_ADMIN_USER: admin
+      NEXTCLOUD_ADMIN_PASSWORD: admin
+      NEXTCLOUD_DATA_DIR: "/var/www/html/data"
+      NEXTCLOUD_UPDATE: 0
+      NEXTCLOUD_EXTENSIONS: groupfolders,user_ldap,georchestra
+      SMTP_HOST: smtp
+      SMTP_PORT: 25
+      MAIL_DOMAIN: "georchestra.org"
+      MAIL_FROM_ADDRESS: "contact"
+      REDIS_HOST: redis
+    volumes:
+       - ./extension/:/var/www/html/apps/georchestra/
+
+  redis:
+    image: redis
+
+  nextcloud_db:
+    image: postgres:14
+    environment:
+      - POSTGRES_PASSWORD=nextcloud
+      - POSTGRES_DB=nextcloud
+      - POSTGRES_USER=nextcloud
+    volumes:
+      - nextcloud_pg_data:/var/lib/postgresql/data
+
+  #load balancer
+  traefik-me-certificate-downloader:
+    image: alpine
+    command: sh -c "cd /etc/certs
+      && wget traefik.me/cert.pem -O traefik.me.crt
+      && wget traefik.me/privkey.pem -O traefik.me-key.pem"
+    volumes:
+      - certs:/etc/certs
+  lb:
+    image: traefik:v2.5
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - certs:/etc/certs:ro
+      - ./config/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./config/traefik-config.yml:/etc/traefik/config.yml:ro
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.tls=true"
+      - "traefik.http.routers.traefik.rule=Host(`georchestra-127-0-1-1.traefik.me`) && (PathPrefix(`/traefik`) || PathPrefix(`/api`))"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.middlewares=traefik-strip"
+      - "traefik.http.middlewares.traefik-strip.stripprefix.prefixes=/traefik"
+
+  # georchestra related containers
+  database:
+    image: georchestra/database:latest
+    environment:
+      - POSTGRES_USER=georchestra
+      - POSTGRES_PASSWORD=georchestra
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    restart: always
+
+  ldap:
+    image: georchestra/ldap:latest
+    secrets:
+      - slapd_password
+      - geoserver_privileged_user_passwd
+    environment:
+        - SLAPD_ORGANISATION=georchestra
+        - SLAPD_DOMAIN=georchestra.org
+        - SLAPD_PASSWORD_FILE=/run/secrets/slapd_password
+        - SLAPD_PASSWORD=
+        - GEOSERVER_PRIVILEGED_USER_PASSWORD_FILE=/run/secrets/geoserver_privileged_user_passwd
+        - SLAPD_LOG_LEVEL=32768 # See https://www.openldap.org/doc/admin24/slapdconfig.html#loglevel%20%3Clevel%3E
+    volumes:
+      - ldap_data:/var/lib/ldap
+      - ldap_config:/etc/ldap
+    restart: always
+    ports:
+      - "3389:389"
+
+  proxy:
+    image: georchestra/security-proxy:latest
+    depends_on:
+      - ldap
+      - database
+    volumes:
+      - ./config:/etc/georchestra
+    environment:
+      - JAVA_OPTIONS=-Dorg.eclipse.jetty.annotations.AnnotationParser.LEVEL=OFF
+      - XMS=256M
+      - XMX=1G
+    restart: always
+    labels:
+     - "traefik.enable=true"
+     - "traefik.http.routers.proxy.tls=true"
+     - "traefik.http.routers.proxy.rule=Host(`georchestra-127-0-1-1.traefik.me`)"
+     # CORS related. Open everything to the world.
+     - "traefik.http.middlewares.corsheader.headers.accesscontrolallowmethods=GET, HEAD, POST, PUT, DELETE, OPTIONS, PATCH"
+     - "traefik.http.middlewares.corsheader.headers.accesscontrolalloworiginlist=*"
+     - "traefik.http.middlewares.corsheader.headers.accesscontrolmaxage=1800"
+     - "traefik.http.middlewares.corsheader.headers.addvaryheader=true"
+     - "traefik.http.middlewares.corsheader.headers.accesscontrolallowcredentials=true"
+     - "traefik.http.routers.proxy.middlewares=corsheader@docker"
+
+  cas:
+    image: georchestra/cas:6.3.5-dev
+    depends_on:
+      - ldap
+    volumes:
+      - ./config:/etc/georchestra
+    environment:
+      - JAVA_OPTIONS=-Dorg.eclipse.jetty.annotations.AnnotationParser.LEVEL=OFF
+      - XMS=256M
+      - XMX=1G
+    restart: always
+    labels:
+    - "traefik.enable=true"
+    - "traefik.http.routers.cas.tls=true"
+    - "traefik.http.routers.cas.rule=Host(`georchestra-127-0-1-1.traefik.me`) && PathPrefix(`/cas`)"
+
+
+
+  smtp:
+    image: camptocamp/smtp-sink:latest
+    volumes:
+      - smtp_maildir:/home/smtp/Maildir/
+    restart: always
+
+  courier-imap:
+    image: camptocamp/courier-imap:latest
+    volumes:
+      - smtp_maildir:/home/smtp/Maildir/
+    restart: always
+
+  webmail:
+    image: camptocamp/sqwebmail:latest
+    environment:
+      - IMAP_HOSTNAME=courier-imap
+      - SMTP_HOSTNAME=smtp-sink
+    volumes:
+      - smtp_maildir:/home/smtp/Maildir/
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.webmail.tls=true"
+      - "traefik.http.routers.webmail.rule=Host(`webmail-127-0-1-1.traefik.me`)"
+    restart: always
+
+volumes:
+  certs:
+  nextcloud_data:
+  pg_data:
+  nextcloud_pg_data:
+  ldap_data:
+  ldap_config:
+  smtp_maildir:
+

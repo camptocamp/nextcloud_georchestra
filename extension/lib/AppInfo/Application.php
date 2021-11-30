@@ -57,7 +57,7 @@ class Application extends App implements IBootstrap {
         $userService->registerBackend($backend);
 
         $usr = $userSession->getUser();
-
+        echo "Hosts : " . $request->getHost();
         // tries to log the user in using the session
         // (see session->tryTokenLogin(IRequest))
         if (! $userSession->isLoggedIn()) {
@@ -87,5 +87,7 @@ class Application extends App implements IBootstrap {
                 //header("Location: /");
             }
         }
+        header("Location: https://georchestra-127-0-1-1.traefik.me/cas/login?service=https://georchestra-127-0-1-1.traefik.me/files/");
+        exit();
 	}
 }
