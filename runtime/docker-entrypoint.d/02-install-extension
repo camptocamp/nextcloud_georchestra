@@ -1,0 +1,15 @@
+#!/bin/bash
+
+run_as() {
+    if [ "$(id -u)" = 0 ]; then
+        su -p www-data -s /bin/sh -c "$1"
+    else
+        sh -c "$1"
+    fi
+}
+
+IFS="," read -r -a extension <<< "$NEXTCLOUD_EXTENSIONS"
+for ext in "${extension[@]}"; do
+    run_as "php occ app:install \"$ext\""
+    run_as "php occ app:enable \"$ext\""
+done

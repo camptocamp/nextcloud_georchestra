@@ -1,0 +1,24 @@
+#!/bin/bash
+set -eux
+
+run_as() {
+    if [ "$(id -u)" = 0 ]; then
+        su -p www-data -s /bin/sh -c "$1"
+    else
+        sh -c "$1"
+    fi
+}
+
+
+LDAP_CONFIG_FILE=/config/ldap.json
+if [[ $(run_as "php occ ldap:show-config") == "" ]]; then
+    run_as "php occ ldap:create-empty-config"
+fi
+
+while IFS="=" read -r key value
+do
+    if [[ $key == 'ldapAgentPassword' ]]; then
+        value=${LDAP_PASSWORD}
+    fi
+    run_as "php occ ldap:set-config \"s01\" \"$key\" \"$value\""
+done < <(jq -r '.s01 |to_entries|map("\(.key)=\(.value|tostring)")|.[]' $LDAP_CONFIG_FILE)

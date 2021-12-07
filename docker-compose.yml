@@ -8,6 +8,7 @@ services:
   nextcloud:
     build: .
     image: nextcloud_georchestra
+    #image: nextcloud:22-apache
     environment:
       PHP_UPLOAD_LIMIT: "4G"
       OVERWRITEPROTOCOL: "https"
@@ -27,8 +28,6 @@ services:
       MAIL_DOMAIN: "georchestra.org"
       MAIL_FROM_ADDRESS: "contact"
       REDIS_HOST: redis
-    volumes:
-       - ./extension/:/var/www/html/apps/georchestra/
 
   redis:
     image: redis
@@ -123,7 +122,7 @@ services:
      - "traefik.http.routers.proxy.middlewares=corsheader@docker"
 
   cas:
-    image: georchestra/cas:6.3.5-dev
+    image: georchestra/cas:latest
     depends_on:
       - ldap
     volumes:
