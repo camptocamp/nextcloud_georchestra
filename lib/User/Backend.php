@@ -3,15 +3,16 @@
 namespace OCA\Georchestra\User;
 use OC\User\Database;
 use OCP\User\Backend\ABackend;
-use OC\Log;
 use OCP\IUserBackend;
 use OCP\User\Backend\ICheckPasswordBackend;
+
+use OCA\Georchestra\Service\LoggingService;
 
 class Backend extends Database implements IUserBackend, ICheckPasswordBackend
 {
 	private $logger;
 
-    public function __construct(Log $logger)
+    public function __construct(LoggingService $logger)
     {
         parent::__construct();
         $this->logger = $logger;

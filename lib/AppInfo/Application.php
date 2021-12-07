@@ -10,6 +10,7 @@ use OCP\AppFramework\Bootstrap\IBootContext;
 
 use OCA\Georchestra\User\Backend;
 use OCA\Georchestra\Service\UserService;
+use OCA\Georchestra\Service\LoggingService;
 use ReflectionObject;
 
 class Application extends App implements IBootstrap {
@@ -21,7 +22,10 @@ class Application extends App implements IBootstrap {
         $container = $this->getContainer();
 
         $container->registerService('Logger', function ($c) {
-            return $c->query('ServerContainer')->getLogger();
+            return new LoggingService(
+                'georchestra',
+                $c->query('ServerContainer')->getLogger()
+            );
         });
 
         $container->registerService('Backend', function ($c) {
@@ -50,42 +54,30 @@ class Application extends App implements IBootstrap {
 
         $logger = $c->query("Logger");
         $request = $c->query("Request");
-        $userSession = $c->query("UserSession");
         $userService = $c->query('UserService');
         $backend = $c->query('Backend');
-
         $userService->registerBackend($backend);
 
-        $usr = $userSession->getUser();
 
         // tries to log the user in using the session
         // (see session->tryTokenLogin(IRequest))
-        if (! $userSession->isLoggedIn()) {
-            $userSession->tryTokenLogin($request);
+        if (! $userService->isLoggedIn()) {
+            $userService->tryTokenLogin($request);
         }
 
-        if ($userSession->isLoggedIn()) {
-            $logger->info("User already logged in (session already opened), skipping");
-            if (! $request->passesCSRFCheck()) {
-                $logger->info("request does not pass CSRF checks !");
-            }
+        if ($userService->isLoggedIn()) {
+            $logger->debug("User already logged in (session already opened), skipping");
             return;
         }
 
-        $user = $request->getHeader("sec-username");
-        $roles = explode(";", $request->getHeader("sec-roles")) ;
+        // If there are still no user logged in, then try a SP Login
+        $userService->trySecurityProxyLogin();
 
-        // automatically logs the user as admin if ROLE_ADMINISTRATOR
-        if (in_array("ROLE_ADMINISTRATOR", $roles)) {
-            $loginResult = $userService->login("admin", "");
-
-
-            if (($loginResult == false) || ($loginResult == null)) {
-                $logger->info("Failed to log the admin in.");
-            } else {
-                $logger->info("Logged in as admin.");
-                //header("Location: /");
-            }
+        // Still not in ? redirect to CAS
+        if (! $userService->isLoggedIn()) {
+            header("Location: https://georchestra-127-0-1-1.traefik.me/files/?login");
+            die();
         }
+
 	}
 }
