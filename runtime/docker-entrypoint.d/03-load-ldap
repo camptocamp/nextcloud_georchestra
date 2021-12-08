@@ -9,15 +9,36 @@ run_as() {
     fi
 }
 
+file_env() {
+    local var="$1"
+    local fileVar="${var}_FILE"
+    local def="${2:-}"
+    local varValue=$(env | grep -E "^${var}=" | sed -E -e "s/^${var}=//")
+    local fileVarValue=$(env | grep -E "^${fileVar}=" | sed -E -e "s/^${fileVar}=//")
+    if [ -n "${varValue}" ] && [ -n "${fileVarValue}" ]; then
+        echo >&2 "error: both $var and $fileVar are set (but are exclusive)"
+        exit 1
+    fi
+    if [ -n "${varValue}" ]; then
+        export "$var"="${varValue}"
+    elif [ -n "${fileVarValue}" ]; then
+        export "$var"="$(cat "${fileVarValue}")"
+    elif [ -n "${def}" ]; then
+        export "$var"="$def"
+    fi
+    unset "$fileVar"
+}
 
 LDAP_CONFIG_FILE=/config/ldap.json
 if [[ $(run_as "php occ ldap:show-config") == "" ]]; then
     run_as "php occ ldap:create-empty-config"
 fi
 
+file_env LDAP_PASSWORD secret
+
 while IFS="=" read -r key value
 do
-    if [[ $key == 'ldapAgentPassword' ]]; then
+    if [[ $key == "ldapAgentPassword" ]]; then
         value=${LDAP_PASSWORD}
     fi
     run_as "php occ ldap:set-config \"s01\" \"$key\" \"$value\""
