@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<info xmlns:xsi= "http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
+    <id>georchestra</id>
+    <name>Georchestra</name>
+    <summary>This application enables administrators to connect Nextcloud behind the Security-Proxy from geOrchestra.</summary>
+    <description><![CDATA[This application allows to get specific users and roles from the HTTP headers sent by the Security-Proxy.
+
+It also permits to synchronize against geOrchestra&#39;s OpenLDAP service for groups and roles resolution.]]></description>
+    <version>0.0.1</version>
+    <types>
+        <prelogin/>
+        <authentication/>
+    </types>
+    <licence>proprietary</licence>
+    <author mail="pierre.mauduit@camptocamp.com" homepage="https://www.camptocamp.com/geospatial_solutions">Pierre Mauduit</author>
+    <namespace>Georchestra</namespace>
+    <category>customization</category>
+    <category>integration</category>
+    <bugs>https://github.com/camptocamp/nextcloud-georchestra</bugs>
+    <dependencies>
+        <nextcloud min-version="21" max-version="22"/>
+    </dependencies>
+</info>

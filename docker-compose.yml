@@ -28,6 +28,7 @@ services:
       MAIL_DOMAIN: "georchestra.org"
       MAIL_FROM_ADDRESS: "contact"
       REDIS_HOST: redis
+      LDAP_PASSWORD: secret
 
   redis:
     image: redis
