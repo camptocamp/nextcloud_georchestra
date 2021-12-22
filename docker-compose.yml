@@ -7,8 +7,7 @@ secrets:
 services:
   nextcloud:
     build: .
-    image: nextcloud_georchestra
-    #image: nextcloud:22-apache
+    image: camptocamp/georchestra-nextcloud
     environment:
       PHP_UPLOAD_LIMIT: "4G"
       OVERWRITEPROTOCOL: "https"

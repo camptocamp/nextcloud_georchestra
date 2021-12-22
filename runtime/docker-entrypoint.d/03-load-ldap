@@ -34,11 +34,15 @@ if [[ $(run_as "php occ ldap:show-config") == "" ]]; then
 fi
 
 file_env LDAP_PASSWORD secret
+file_env LDAP_HOST ldap
 
 while IFS="=" read -r key value
 do
     if [[ $key == "ldapAgentPassword" ]]; then
         value=${LDAP_PASSWORD}
+    fi
+    if [[ $key == "ldapHost" ]]; then
+        value=${LDAP_HOST}
     fi
     run_as "php occ ldap:set-config \"s01\" \"$key\" \"$value\""
 done < <(jq -r '.s01 |to_entries|map("\(.key)=\(.value|tostring)")|.[]' $LDAP_CONFIG_FILE)
