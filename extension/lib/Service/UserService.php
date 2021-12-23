@@ -40,7 +40,7 @@ class UserService {
     }
 
     public function postLogout() {
-        header("Location: " . $this->request->getServerProtocol() . '://' . $this->request->getServerHost() . '/cas/logout');
+        header("Location: " . $this->request->getServerProtocol() . '://' . $this->request->getServerHost() . '/logout');
         exit();
     }
 
