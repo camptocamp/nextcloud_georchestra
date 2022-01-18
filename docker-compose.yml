@@ -1,13 +1,19 @@
 version: "3.8"
+
 secrets:
   slapd_password:
     file: ./secrets/slapd_password.txt
   geoserver_privileged_user_passwd:
     file: ./secrets/geoserver_privileged_user_passwd.txt
+
 services:
+
   nextcloud:
     build: .
     image: camptocamp/georchestra-nextcloud
+    # image: nextcloud:22-apache
+    volumes:
+      - nextcloud_data:/var/www/html/data
     environment:
       PHP_UPLOAD_LIMIT: "4G"
       OVERWRITEPROTOCOL: "https"
@@ -28,6 +34,8 @@ services:
       MAIL_FROM_ADDRESS: "contact"
       REDIS_HOST: redis
       LDAP_PASSWORD: secret
+      NC_dbuser: nextcloud
+      NC_dbpassword: nextcloud
 
   redis:
     image: redis
