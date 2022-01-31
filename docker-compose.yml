@@ -7,11 +7,11 @@ secrets:
     file: ./secrets/geoserver_privileged_user_passwd.txt
 
 services:
-
   nextcloud:
-    build: .
+    build:
+      context: .
+      target: runtime
     image: camptocamp/georchestra-nextcloud
-    # image: nextcloud:22-apache
     volumes:
       - nextcloud_src:/var/www/html
       - nextcloud_data:/var/www/html/data

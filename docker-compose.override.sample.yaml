@@ -1,0 +1,10 @@
+version: "3.8"
+
+services:
+
+  nextcloud:
+    build:
+      context: .
+      target: tester
+    volumes:
+      - ./extension:/src/extension
