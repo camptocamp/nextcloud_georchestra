@@ -13,6 +13,7 @@ services:
     image: camptocamp/georchestra-nextcloud
     # image: nextcloud:22-apache
     volumes:
+      - nextcloud_src:/var/www/html
       - nextcloud_data:/var/www/html/data
     environment:
       PHP_UPLOAD_LIMIT: "4G"
@@ -175,6 +176,7 @@ services:
 volumes:
   certs:
   nextcloud_data:
+  nextcloud_src:
   pg_data:
   nextcloud_pg_data:
   ldap_data:

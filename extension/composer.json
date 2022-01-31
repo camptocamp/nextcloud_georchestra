@@ -1,15 +1,13 @@
 {
-    "name": "nextcloud/georchestra",
-    "description": "This application enables administrators to connect Nextcloud behind the Security-Proxy from geOrchestra.",
-    "type": "project",
-    "license": "Closed-Source",
-    "authors": [
-        {
-            "name": "Pierre Mauduit"
-        }
-    ],
-    "require": {},
-    "require-dev": {
-        "phpunit/phpunit": "^5.4"
-    }
+	"name" : "nextcloud/georchestra",
+	"description" : "This application enables administrators to connect Nextcloud behind the Security-Proxy from geOrchestra.",
+	"type" : "project",
+	"license" : "Closed-Source",
+	"authors" : [{
+			"name" : "Pierre Mauduit"
+		}
+	],
+	"require-dev" : {
+		"phpunit/phpunit" : "^9.5"
+	}
 }

@@ -8,8 +8,6 @@ run_as() {
     fi
 }
 
-run_as "NC_installed=true php /var/www/html/occ config:system:set installed true"
-
 IFS="," read -r -a extension <<< "$NEXTCLOUD_EXTENSIONS"
 for ext in "${extension[@]}"; do
     run_as "php occ app:install \"$ext\"" || true
