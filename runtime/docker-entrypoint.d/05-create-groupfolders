@@ -1,0 +1,22 @@
+#!/bin/bash
+set -x 
+run_as() {
+    if [ "$(id -u)" = 0 ]; then
+        su -p www-data -s /bin/sh -c "$1"
+    else
+        sh -c "$1"
+    fi
+}
+
+# be sure ldap groups are synchronized
+#run_as "php -f /var/www/html/cron.php"
+LDAP_GROUPS=( $(run_as "php occ group:list --output=json" |jq -r "keys|@sh") )
+for group in "${LDAP_GROUPS[@]}"; do
+    group=$(eval echo $group)
+    exists=$(run_as "php occ groupfolders:list --output=json" | jq -c ".[] | select( .mount_point == \"$group\" )")
+    if [[ $exists == '' ]]; then
+        run_as "php occ groupfolders:create $group"
+        group_id=$(run_as "php occ groupfolders:list --output=json" | jq -c ".[] | select( .mount_point == \"$group\" ) | .id ")
+        run_as "php occ groupfolders:group ${group_id} $group"
+    fi
+done

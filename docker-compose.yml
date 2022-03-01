@@ -11,6 +11,8 @@ services:
     build:
       context: .
       target: runtime
+      args:
+        BASETAG: 23-apache
     image: camptocamp/georchestra-nextcloud
     volumes:
       - nextcloud_src:/var/www/html
@@ -28,15 +30,14 @@ services:
       NEXTCLOUD_ADMIN_PASSWORD: admin
       NEXTCLOUD_DATA_DIR: "/var/www/html/data"
       NEXTCLOUD_UPDATE: 0
-      NEXTCLOUD_EXTENSIONS: groupfolders,user_ldap,georchestra
+      NEXTCLOUD_EXTENSIONS: groupfolders,user_ldap
+      NEXTCLOUD_EXTENSIONS_DISABLE: contactsinteraction,cloud_federation_api,firstrunwizard,weather_status
       SMTP_HOST: smtp
       SMTP_PORT: 25
       MAIL_DOMAIN: "georchestra.org"
       MAIL_FROM_ADDRESS: "contact"
       REDIS_HOST: redis
       LDAP_PASSWORD: secret
-      NC_dbuser: nextcloud
-      NC_dbpassword: nextcloud
 
   redis:
     image: redis
