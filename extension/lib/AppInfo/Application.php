@@ -92,10 +92,15 @@ class Application extends App implements IBootstrap {
 
         $user = $request->getHeader("sec-username");
         $roles = explode(";", $request->getHeader("sec-roles")) ;
+
+        // This can be done in SP
+        /*
         if(!$user){
             header("Location: " . $request->getServerProtocol() . '://' . $request->getServerHost() . '/cas/login');
             exit();
         }
+        */
+
         // automatically logs the user as admin if ROLE_ADMINISTRATOR
         if (in_array("ROLE_ADMINISTRATOR", $roles)) {
             $user = "admin";

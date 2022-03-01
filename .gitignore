@@ -8,3 +8,4 @@ vendor
 **/.ptp-sync-folder
 .project
 .settings
+docker-compose.override.yaml

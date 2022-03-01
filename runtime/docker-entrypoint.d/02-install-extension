@@ -10,6 +10,6 @@ run_as() {
 
 IFS="," read -r -a extension <<< "$NEXTCLOUD_EXTENSIONS"
 for ext in "${extension[@]}"; do
-    run_as "php occ app:install \"$ext\""
+    run_as "php occ app:install \"$ext\"" || true
     run_as "php occ app:enable \"$ext\""
 done
