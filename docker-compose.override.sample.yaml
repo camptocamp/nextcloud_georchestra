@@ -7,4 +7,8 @@ services:
       context: .
       target: tester
     volumes:
-      - ./extension:/src/extension
+      - ./runtime/docker-entrypoint.d:/docker-entrypoint.d
+      - ../server/apps:/var/www/html/apps:ro
+      - ../server/lib:/var/www/html/lib:ro
+    environment:
+      - XDEBUG_SESSION=1

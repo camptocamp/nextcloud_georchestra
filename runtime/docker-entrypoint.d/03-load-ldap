@@ -44,5 +44,8 @@ do
     if [[ $key == "ldapHost" ]]; then
         value=${LDAP_HOST}
     fi
+    if [[ $key == "ldapPort" ]]; then
+        value=${LDAP_PORT:-389}
+    fi
     run_as "php occ ldap:set-config \"s01\" \"$key\" \"$value\""
 done < <(jq -r '.s01 |to_entries|map("\(.key)=\(.value|tostring)")|.[]' $LDAP_CONFIG_FILE)
