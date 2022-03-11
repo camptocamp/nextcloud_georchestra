@@ -1,5 +1,7 @@
 #!/bin/bash
 
+rm -rf /tmp/xdebug.log
+
 run_as() {
     if [ "$(id -u)" = 0 ]; then
         su -p www-data -s /bin/sh -c "$1"
