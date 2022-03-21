@@ -1,0 +1,40 @@
+name: "nextcloud"
+
+on:
+  push:
+  pull_request:
+  release:
+    types: [published]
+
+jobs:
+  build-docker:
+    runs-on: ubuntu-latest
+    steps:
+    - name: "Checking out"
+      uses: actions/checkout@v2
+
+    - name: Calculating docker image tag
+      if: github.repository == 'georchestra/nextcloud-app'
+      id: version
+      run: echo ::set-output name=VERSION::$(echo $GITHUB_REF | cut -d / -f 3)
+
+    - name: build a docker image
+      if: github.repository == 'georchestra/nextcloud-app'
+      run: docker build --target runtime --tag georchestra/cadastrapp:${{ steps.version.outputs.VERSION }} .
+
+    - name: "Logging in docker.io"
+      if: github.repository == 'georchestra/nextcloud-app'
+      uses: azure/docker-login@v1
+      with:
+        username: '${{ secrets.DOCKER_HUB_USERNAME }}'
+        password: '${{ secrets.DOCKER_HUB_PASSWORD }}'
+
+    - name: "Pushing latest to docker.io"
+      if: github.repository == 'georchestra/nextcloud-app' && github.ref == 'refs/heads/master'
+      run: |
+        docker tag georchestra/nextcloud:${{ steps.version.outputs.VERSION }} georchestra/nextcloud:latest
+        docker push georchestra/nextcloud:latest
+    - name: "Pushing release tag to docker.io"
+      if: github.repository == 'georchestra/nextcloud-app' && contains(github.ref, 'refs/tags/')
+      run: |
+        docker push georchestra/nextcloud:${{ steps.version.outputs.VERSION }}
